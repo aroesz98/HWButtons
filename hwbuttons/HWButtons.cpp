@@ -1,18 +1,16 @@
 /**
  * @file HWButtons.cpp
+ * Author: Arkadiusz Szlanta
  */
 
-#include "HWButtons.h"
-
-// ----- Initialization and Default Values -----
+#include "HWButtons.hpp"
 
 /**
  * @brief Construct a new HWButtons object but not (yet) initialize the IO pin.
  */
 HWButtons::HWButtons()
 {
-  _pin = -1;
-  // further initialization has moved to HWButtons.h
+    _pin = -1;
 }
 
 /**
@@ -23,152 +21,135 @@ HWButtons::HWButtons()
  */
 HWButtons::HWButtons(GPIO_TypeDef *port, const int pin, const bool activeLow)
 {
-  // HWButtons();
-  _pin = pin;
-  _port = port;
+    _pin = pin;
+    _port = port;
 
-  if (activeLow) {
-    // the button connects the input pin to GND when pressed.
-    _buttonPressed = LOW;
+    if (activeLow)
+    {
+        // the button connects the input pin to GND when pressed.
+        _buttonPressed = buttonState::STATE_LOW;
+    }
+    else
+    {
+        // the button connects the input pin to VCC when pressed.
+        _buttonPressed = buttonState::STATE_HIGH;
+    }
 
-  } else {
-    // the button connects the input pin to VCC when pressed.
-    _buttonPressed = HIGH;
-  } // if
-
-} // HWButtons
-
+}
 
 // explicitly set the number of millisec that have to pass by before a click is assumed stable.
 void HWButtons::setDebounceTicks(const int ticks)
 {
-  _debounceTicks = ticks;
-} // setDebounceTicks
-
+    _debounceTicks = ticks;
+}
 
 // explicitly set the number of millisec that have to pass by before a click is detected.
 void HWButtons::setClickTicks(const int ticks)
 {
-  _clickTicks = ticks;
-} // setClickTicks
-
+    _clickTicks = ticks;
+}
 
 // explicitly set the number of millisec that have to pass by before a long button press is detected.
 void HWButtons::setPressTicks(const int ticks)
 {
-  _pressTicks = ticks;
-} // setPressTicks
-
+    _pressTicks = ticks;
+}
 
 // save function for click event
 void HWButtons::attachClick(callbackFunction newFunction)
 {
-  _clickFunc = newFunction;
-} // attachClick
-
+    _clickFunc = newFunction;
+}
 
 // save function for parameterized click event
 void HWButtons::attachClick(parameterizedCallbackFunction newFunction, void *parameter)
 {
-  _paramClickFunc = newFunction;
-  _clickFuncParam = parameter;
-} // attachClick
-
+    _paramClickFunc = newFunction;
+    _clickFuncParam = parameter;
+}
 
 // save function for doubleClick event
 void HWButtons::attachDoubleClick(callbackFunction newFunction)
 {
-  _doubleClickFunc = newFunction;
-  _maxClicks = max(_maxClicks, 2);
-} // attachDoubleClick
-
+    _doubleClickFunc = newFunction;
+    _maxClicks = max(_maxClicks, 2);
+}
 
 // save function for parameterized doubleClick event
 void HWButtons::attachDoubleClick(parameterizedCallbackFunction newFunction, void *parameter)
 {
-  _paramDoubleClickFunc = newFunction;
-  _doubleClickFuncParam = parameter;
-  _maxClicks = max(_maxClicks, 2);
-} // attachDoubleClick
-
+    _paramDoubleClickFunc = newFunction;
+    _doubleClickFuncParam = parameter;
+    _maxClicks = max(_maxClicks, 2);
+}
 
 // save function for multiClick event
 void HWButtons::attachMultiClick(callbackFunction newFunction)
 {
-  _multiClickFunc = newFunction;
-  _maxClicks = max(_maxClicks, 100);
-} // attachMultiClick
-
+    _multiClickFunc = newFunction;
+    _maxClicks = max(_maxClicks, 100);
+}
 
 // save function for parameterized MultiClick event
 void HWButtons::attachMultiClick(parameterizedCallbackFunction newFunction, void *parameter)
 {
-  _paramMultiClickFunc = newFunction;
-  _multiClickFuncParam = parameter;
-  _maxClicks = max(_maxClicks, 100);
-} // attachMultiClick
-
+    _paramMultiClickFunc = newFunction;
+    _multiClickFuncParam = parameter;
+    _maxClicks = max(_maxClicks, 100);
+}
 
 // save function for longPressStart event
 void HWButtons::attachLongPressStart(callbackFunction newFunction)
 {
-  _longPressStartFunc = newFunction;
-} // attachLongPressStart
-
+    _longPressStartFunc = newFunction;
+}
 
 // save function for parameterized longPressStart event
 void HWButtons::attachLongPressStart(parameterizedCallbackFunction newFunction, void *parameter)
 {
-  _paramLongPressStartFunc = newFunction;
-  _longPressStartFuncParam = parameter;
-} // attachLongPressStart
-
+    _paramLongPressStartFunc = newFunction;
+    _longPressStartFuncParam = parameter;
+}
 
 // save function for longPressStop event
 void HWButtons::attachLongPressStop(callbackFunction newFunction)
 {
-  _longPressStopFunc = newFunction;
-} // attachLongPressStop
-
+    _longPressStopFunc = newFunction;
+}
 
 // save function for parameterized longPressStop event
 void HWButtons::attachLongPressStop(parameterizedCallbackFunction newFunction, void *parameter)
 {
-  _paramLongPressStopFunc = newFunction;
-  _longPressStopFuncParam = parameter;
-} // attachLongPressStop
-
+    _paramLongPressStopFunc = newFunction;
+    _longPressStopFuncParam = parameter;
+}
 
 // save function for during longPress event
 void HWButtons::attachDuringLongPress(callbackFunction newFunction)
 {
-  _duringLongPressFunc = newFunction;
-} // attachDuringLongPress
-
+    _duringLongPressFunc = newFunction;
+}
 
 // save function for parameterized during longPress event
 void HWButtons::attachDuringLongPress(parameterizedCallbackFunction newFunction, void *parameter)
 {
-  _paramDuringLongPressFunc = newFunction;
-  _duringLongPressFuncParam = parameter;
-} // attachDuringLongPress
-
+    _paramDuringLongPressFunc = newFunction;
+    _duringLongPressFuncParam = parameter;
+}
 
 void HWButtons::reset(void)
 {
-  _state = HWButtons::FSM_INIT;
-  _lastState = HWButtons::FSM_INIT;
-  _nClicks = 0;
-  _startTime = 0;
+    _state = HWButtons::FSM_INIT;
+    _lastState = HWButtons::FSM_INIT;
+    _nClicks = 0;
+    _startTime = 0;
 }
 
-
-// ShaggyDog ---- return number of clicks in any case: single or multiple clicks
+// ShaggyDog ---- return number of clicks in any case.
 int HWButtons::getNumberClicks(void)
 {
-  return _nClicks;
+    return _nClicks;
 }
-
 
 /**
  * @brief Check input of the configured pin and then advance the finite state
@@ -176,139 +157,163 @@ int HWButtons::getNumberClicks(void)
  */
 void HWButtons::tick(void)
 {
-  if (_pin >= 0) {
-    tick(HAL_GPIO_ReadPin(_port, _pin) == _buttonPressed);
-  }
+    if (_pin >= 0)
+    {
+        tick(HAL_GPIO_ReadPin(_port, _pin) == _buttonPressed);
+    }
 }
-
 
 /**
  *  @brief Advance to a new state and save the last one to come back in cas of bouncing detection.
  */
 void HWButtons::_newState(stateMachine_t nextState)
 {
-  _lastState = _state;
-  _state = nextState;
-} // _newState()
-
+    _lastState = _state;
+    _state = nextState;
+}
 
 /**
  * @brief Run the finite state machine (FSM) using the given level.
  */
 void HWButtons::tick(bool activeLevel)
 {
-  unsigned long now = HAL_GetTick(); // current (relative) time in msecs.
-  unsigned long waitTime = (now - _startTime);
+    unsigned long now = HAL_GetTick(); // current (relative) time in msecs.
+    unsigned long waitTime = (now - _startTime);
 
-  // Implementation of the state machine
-  switch (_state) {
-  case HWButtons::FSM_INIT:
-    // waiting for level to become active.
-    if (activeLevel) {
-      _newState(HWButtons::FSM_DOWN);
-      _startTime = now; // remember starting time
-      _nClicks = 0;
-    } // if
-    break;
+    // Implementation of the state machine
+    switch (_state)
+    {
+    case HWButtons::FSM_INIT:
+        // waiting for level to become active.
+        if (activeLevel)
+        {
+            _newState(HWButtons::FSM_DOWN);
+            _startTime = now; // remember starting time
+            _nClicks = 0;
+        }
+        break;
 
-  case HWButtons::FSM_DOWN:
-    // waiting for level to become inactive.
+    case HWButtons::FSM_DOWN:
+        // waiting for level to become inactive.
 
-    if ((!activeLevel) && (waitTime < _debounceTicks)) {
-      // button was released to quickly so I assume some bouncing.
-      _newState(_lastState);
+        if ((!activeLevel) && (waitTime < _debounceTicks))
+        {
+            // button was released to quickly so I assume some bouncing.
+            _newState(_lastState);
+        }
+        else if (!activeLevel)
+        {
+            _newState(HWButtons::FSM_UP);
+            _startTime = now; // remember starting time
+        }
+        else if ((activeLevel) && (waitTime > _pressTicks))
+        {
+            if (_longPressStartFunc)
+                _longPressStartFunc();
+            if (_paramLongPressStartFunc)
+                _paramLongPressStartFunc(_longPressStartFuncParam);
+            _newState(HWButtons::FSM_PRESS);
+        }
+        break;
 
-    } else if (!activeLevel) {
-      _newState(HWButtons::FSM_UP);
-      _startTime = now; // remember starting time
+    case HWButtons::FSM_UP:
+        // level is inactive
 
-    } else if ((activeLevel) && (waitTime > _pressTicks)) {
-      if (_longPressStartFunc) _longPressStartFunc();
-      if (_paramLongPressStartFunc) _paramLongPressStartFunc(_longPressStartFuncParam);
-      _newState(HWButtons::FSM_PRESS);
-    } // if
-    break;
+        if ((activeLevel) && (waitTime < _debounceTicks))
+        {
+            // button was pressed to quickly so I assume some bouncing.
+            _newState(_lastState); // go back
+        }
+        else if (waitTime >= _debounceTicks)
+        {
+            // count as a short button down
+            _nClicks++;
+            _newState(HWButtons::FSM_COUNT);
+        }
+        break;
 
-  case HWButtons::FSM_UP:
-    // level is inactive
+    case HWButtons::FSM_COUNT:
+        // dobounce time is over, count clicks
 
-    if ((activeLevel) && (waitTime < _debounceTicks)) {
-      // button was pressed to quickly so I assume some bouncing.
-      _newState(_lastState); // go back
+        if (activeLevel)
+        {
+            // button is down again
+            _newState(HWButtons::FSM_DOWN);
+            _startTime = now; // remember starting time
+        }
+        else if ((waitTime > _clickTicks) || (_nClicks == _maxClicks))
+        {
+            // now we know how many clicks have been made.
 
-    } else if (waitTime >= _debounceTicks) {
-      // count as a short button down
-      _nClicks++;
-      _newState(HWButtons::FSM_COUNT);
-    } // if
-    break;
+            if (_nClicks == 1)
+            {
+                // this was 1 click only.
+                if (_clickFunc)
+                    _clickFunc();
+                if (_paramClickFunc)
+                    _paramClickFunc(_clickFuncParam);
+            }
+            else if (_nClicks == 2)
+            {
+                // this was a 2 click sequence.
+                if (_doubleClickFunc)
+                    _doubleClickFunc();
+                if (_paramDoubleClickFunc)
+                    _paramDoubleClickFunc(_doubleClickFuncParam);
+            }
+            else
+            {
+                // this was a multi click sequence.
+                if (_multiClickFunc)
+                    _multiClickFunc();
+                if (_paramMultiClickFunc)
+                    _paramMultiClickFunc(_multiClickFuncParam);
+            }
 
-  case HWButtons::FSM_COUNT:
-    // dobounce time is over, count clicks
+            reset();
+        }
+        break;
 
-    if (activeLevel) {
-      // button is down again
-      _newState(HWButtons::FSM_DOWN);
-      _startTime = now; // remember starting time
+    case HWButtons::FSM_PRESS:
+        // waiting for menu pin being release after long press.
 
-    } else if ((waitTime > _clickTicks) || (_nClicks == _maxClicks)) {
-      // now we know how many clicks have been made.
+        if (!activeLevel)
+        {
+            _newState(HWButtons::FSM_PRESSEND);
+            _startTime = now;
+        }
+        else
+        {
+            // still the button is pressed
+            if (_duringLongPressFunc)
+                _duringLongPressFunc();
+            if (_paramDuringLongPressFunc)
+                _paramDuringLongPressFunc(_duringLongPressFuncParam);
+        } // if
+        break;
 
-      if (_nClicks == 1) {
-        // this was 1 click only.
-        if (_clickFunc) _clickFunc();
-        if (_paramClickFunc) _paramClickFunc(_clickFuncParam);
+    case HWButtons::FSM_PRESSEND:
+        // button was released.
 
-      } else if (_nClicks == 2) {
-        // this was a 2 click sequence.
-        if (_doubleClickFunc) _doubleClickFunc();
-        if (_paramDoubleClickFunc) _paramDoubleClickFunc(_doubleClickFuncParam);
+        if ((activeLevel) && (waitTime < _debounceTicks))
+        {
+            // button was released to quickly so I assume some bouncing.
+            _newState(_lastState); // go back
+        }
+        else if (waitTime >= _debounceTicks)
+        {
+            if (_longPressStopFunc)
+                _longPressStopFunc();
+            if (_paramLongPressStopFunc)
+                _paramLongPressStopFunc(_longPressStopFuncParam);
+            reset();
+        }
+        break;
 
-      } else {
-        // this was a multi click sequence.
-        if (_multiClickFunc) _multiClickFunc();
-        if (_paramMultiClickFunc) _paramMultiClickFunc(_multiClickFuncParam);
-      } // if
-
-      reset();
-    } // if
-    break;
-
-  case HWButtons::FSM_PRESS:
-    // waiting for menu pin being release after long press.
-
-    if (!activeLevel) {
-      _newState(HWButtons::FSM_PRESSEND);
-      _startTime = now;
-
-    } else {
-      // still the button is pressed
-      if (_duringLongPressFunc) _duringLongPressFunc();
-      if (_paramDuringLongPressFunc) _paramDuringLongPressFunc(_duringLongPressFuncParam);
-    } // if
-    break;
-
-  case HWButtons::FSM_PRESSEND:
-    // button was released.
-
-    if ((activeLevel) && (waitTime < _debounceTicks)) {
-      // button was released to quickly so I assume some bouncing.
-      _newState(_lastState); // go back
-
-    } else if (waitTime >= _debounceTicks) {
-      if (_longPressStopFunc) _longPressStopFunc();
-      if (_paramLongPressStopFunc) _paramLongPressStopFunc(_longPressStopFuncParam);
-      reset();
+    default:
+        // unknown state detected -> reset state machine
+        _newState(HWButtons::FSM_INIT);
+        break;
     }
-    break;
+}
 
-  default:
-    // unknown state detected -> reset state machine
-    _newState(HWButtons::FSM_INIT);
-    break;
-  } // if
-
-} // HWButtons.tick()
-
-
-// end.
